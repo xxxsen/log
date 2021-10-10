@@ -78,18 +78,22 @@ func (u UTCFormatter) Format(e *logrus.Entry) ([]byte, error) {
 	return u.Formatter.Format(e)
 }
 
-//Init 日志初始化
-func Init(file string, lv int, maxRotate int, maxSizeMB int, maxKeepDays int, withConsole bool) {
+//Init 日志初始化, 外层传入maxSize, 单位调整为bytes
+func Init(file string, lv int, maxRotate int, maxSize int, maxKeepDays int, withConsole bool) {
 	customFormatter := new(logrus.TextFormatter)
 	customFormatter.TimestampFormat = "2006-01-02 15:04:05.000"
 	customFormatter.FullTimestamp = true
 	logInst.SetFormatter(&UTCFormatter{customFormatter})
 	var logger io.Writer = &nullWriter{}
-	if len(file) != 0 && maxSizeMB > 0 {
+	if len(file) != 0 && maxSize > 0 {
+		sz := maxSize / 1024 / 1024
+		if sz == 0 {
+			sz = 1
+		}
 		logger = &lumberjack.Logger{
 			// 日志输出文件路径
 			Filename:   file,
-			MaxSize:    maxSizeMB, // megabytes
+			MaxSize:    sz, // megabytes
 			MaxBackups: maxRotate,
 			MaxAge:     maxKeepDays, //days
 			Compress:   false,       // disabled by default
